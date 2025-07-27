@@ -8,7 +8,6 @@
     "start": "server.js",
     "dev": "nodemon server.js"
   },
-  "author": "sangam mukherjee",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
