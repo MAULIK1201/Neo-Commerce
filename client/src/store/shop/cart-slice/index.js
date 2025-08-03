@@ -20,7 +20,9 @@ export const addToCart = createAsyncThunk(
 
     return response.data;
   }
+
 );
+
 
 export const fetchCartItems = createAsyncThunk(
   "cart/fetchCartItems",
