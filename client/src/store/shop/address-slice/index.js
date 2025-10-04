@@ -6,14 +6,24 @@ const initialState = {
   addressList: [],
 };
 
+// app.use(cors({
+//   origin: 'http://localhost:5173',
+//   credentials: true,
+// }));
+
 export const addNewAddress = createAsyncThunk(
   "/addresses/addNewAddress",
   async (formData) => {
+    const token = JSON.parse(sessionStorage.getItem('token'));
     const response = await axios.post(
       `${import.meta.env.VITE_API_URL}/api/shop/address/add`,
-      formData
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
-
     return response.data;
   }
 );
@@ -21,10 +31,16 @@ export const addNewAddress = createAsyncThunk(
 export const fetchAllAddresses = createAsyncThunk(
   "/addresses/fetchAllAddresses",
   async (userId) => {
+    const token = JSON.parse(sessionStorage.getItem('token'));
     const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/api/shop/address/get/${userId}`
+      `${import.meta.env.VITE_API_URL}/api/shop/address/get/${userId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },  
+      }
     );
-
+    
     return response.data;
   }
 );
@@ -32,9 +48,15 @@ export const fetchAllAddresses = createAsyncThunk(
 export const editaAddress = createAsyncThunk(
   "/addresses/editaAddress",
   async ({ userId, addressId, formData }) => {
+    const token = JSON.parse(sessionStorage.getItem('token'));
     const response = await axios.put(
       `${import.meta.env.VITE_API_URL}/api/shop/address/update/${userId}/${addressId}`,
-      formData
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
 
     return response.data;

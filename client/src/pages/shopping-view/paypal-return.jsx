@@ -12,7 +12,8 @@ function PaypalReturnPage() {
   const payerId = params.get("PayerID");
 
   useEffect(() => {
-    if (paymentId && payerId) {
+    if (paymentId && payerId) 
+      {
       const orderId = JSON.parse(sessionStorage.getItem("currentOrderId"));
 
       dispatch(capturePayment({ paymentId, payerId, orderId })).then((data) => {
