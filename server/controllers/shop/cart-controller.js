@@ -1,55 +1,62 @@
 const Cart = require("../../models/Cart");
 const Product = require("../../models/Product");
 
+// Add to cart with version control
 const addToCart = async (req, res) => {
+  const session = await mongoose.startSession();
+  
   try {
-    const { userId, productId, quantity } = req.body;
+    await session.withTransaction(async () => {
+      const { userId, productId, quantity } = req.body;
 
-    if (!userId || !productId || quantity <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid data provided!",
-      });
-    }
+      // Find cart with version control
+      let cart = await Cart.findOne({ userId }).session(session);
+      
+      if (!cart) {
+        cart = new Cart({ userId, items: [], __v: 0 });
+      }
 
-    const product = await Product.findById(productId);
+      // Check if product exists and has stock
+      const product = await Product.findById(productId).session(session);
+      if (!product) {
+        throw new Error("Product not found");
+      }
 
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
-    }
+      // Find existing item
+      const existingItemIndex = cart.items.findIndex(
+        (item) => item.productId.toString() === productId
+      );
 
-    let cart = await Cart.findOne({ userId });
+      const newQuantity = existingItemIndex >= 0 
+        ? cart.items[existingItemIndex].quantity + quantity 
+        : quantity;
 
-    if (!cart) {
-      cart = new Cart({ userId, items: [] });
-    }
+      // Check stock availability
+      if (newQuantity > product.totalStock) {
+        throw new Error("Insufficient stock");
+      }
 
-    const findCurrentProductIndex = cart.items.findIndex(
-      (item) => item.productId.toString() === productId
-    );
+      // Update cart
+      if (existingItemIndex >= 0) {
+        cart.items[existingItemIndex].quantity = newQuantity;
+      } else {
+        cart.items.push({ productId, quantity });
+      }
 
-    if (findCurrentProductIndex === -1) {
-      cart.items.push({ productId, quantity });
-    } else {
-      cart.items[findCurrentProductIndex].quantity += quantity;
-    }
-
-    await cart.save();
-    res.status(200).json({
-      success: true,
-      data: cart,
+      await cart.save({ session });
     });
+
+    res.status(200).json({ success: true });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
+    res.status(400).json({
       success: false,
-      message: "Error",
+      message: error.message
     });
+  } finally {
+    await session.endSession();
   }
 };
+
 
 const fetchCartItems = async (req, res) => {
   try {
